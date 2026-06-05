@@ -1,51 +1,81 @@
-/* Shared structure for every theme. The register-specific look lives in
-   casual.css / scientific.css, which are appended after this file. */
+/* Shared structure + design. The palette and fonts are CSS variables set by the
+   theme file (casual.css / scientific.css), appended after this one. */
 
-@page { size: A4; margin: 20mm 18mm; }
+@page { size: A4; margin: 18mm 17mm; }
 
 * { box-sizing: border-box; }
 html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-body { margin: 0; line-height: 1.55; font-size: 11.5pt; color: #1a1a1a; }
-
-h1, h2, h3, h4 { line-height: 1.25; page-break-after: avoid; }
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 11pt;
+  line-height: 1.55;
+  color: var(--ink);
+}
+h1, h2, h3, h4 { font-family: var(--font-head); line-height: 1.2; page-break-after: avoid; color: var(--ink); }
 p { orphans: 3; widows: 3; }
-pre, .highlight, table, figure, .diagram, .resources { page-break-inside: avoid; }
+strong { font-weight: 600; }
+a { color: var(--accent); text-decoration: none; }
 img, svg { max-width: 100%; height: auto; }
+.highlight, table, .callout, .resources, .roadmap-frame, figure { break-inside: avoid; }
 
-/* Cover (first page, no break before it) */
-.cover { display: flex; flex-direction: column; justify-content: center; min-height: 78vh; }
-.book-title { font-size: 34pt; margin: 0 0 .3em; }
-.book-subtitle { font-size: 16pt; color: #555; margin: 0 0 1.5em; font-weight: 400; }
-.book-meta { color: #888; font-size: 10pt; }
+/* ---------------- Cover ---------------- */
+.cover { position: relative; min-height: 92vh; display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 9vh; }
+.cover-band { position: absolute; top: -18mm; left: -17mm; right: -17mm; height: 42%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+.cover-kicker { font-family: var(--font-head); font-weight: 700; letter-spacing: .3em; font-size: 10pt; color: var(--accent); margin: 0 0 .7em; }
+.book-title { font-family: var(--font-display); font-weight: 700; font-size: 40pt; line-height: 1.04; margin: 0 0 .28em; letter-spacing: -.01em; }
+.book-subtitle { font-size: 15pt; color: var(--muted); font-weight: 400; margin: 0 0 1.7em; max-width: 26em; }
+.book-meta { color: var(--muted); font-size: 9.5pt; font-family: var(--font-head); letter-spacing: .02em; }
 
-/* Each major section starts on a fresh page (break-before only, to avoid blanks) */
+/* ---------------- Page breaks ---------------- */
 .toc, .roadmap, .chapter { break-before: page; }
 
-.toc h1 { font-size: 20pt; }
-.toc ol { padding-left: 1.2em; }
-.toc li { margin: .25em 0; }
-.toc a { text-decoration: none; color: inherit; }
+/* ---------------- Table of contents ---------------- */
+.toc h1, .roadmap h1 { font-size: 22pt; margin: 0 0 .9em; }
+.toc ol { list-style: none; counter-reset: toc; padding: 0; margin: 0; }
+.toc li { counter-increment: toc; display: flex; align-items: baseline; gap: .9em; padding: .5em 0; border-bottom: 1px solid var(--rule); }
+.toc li::before { content: counter(toc, decimal-leading-zero); font-family: var(--font-head); font-weight: 700; color: var(--accent); font-size: 11pt; min-width: 2.1em; }
+.toc a { color: var(--ink); font-size: 12.5pt; }
 
-.roadmap { text-align: center; }
-.roadmap h1 { font-size: 20pt; text-align: left; }
-.mermaid { margin: 1.2em auto; }
+/* ---------------- Roadmap ---------------- */
+.roadmap-frame { border: 1px solid var(--rule); border-radius: 14px; padding: 16px; background: var(--surface); text-align: center; }
+.roadmap-frame svg { max-width: 100% !important; max-height: 210mm; height: auto !important; }
 
-.chapter-title { font-size: 22pt; margin: 0 0 .8em; padding-bottom: .2em; border-bottom: 2px solid currentColor; }
+/* ---------------- Chapter opener ---------------- */
+.chapter-head { display: flex; align-items: center; gap: .55em; margin: 0 0 1em; padding-bottom: .4em; border-bottom: 3px solid var(--accent); }
+.chapter-num { font-family: var(--font-display); font-weight: 700; font-size: 38pt; line-height: 1; color: var(--accent-soft); -webkit-text-stroke: 1.3px var(--accent); }
+.chapter-title { font-size: 24pt; margin: 0; }
+.chapter h2 { font-size: 16pt; margin: 1.35em 0 .45em; }
+.chapter h3 { font-size: 12.5pt; margin: 1.1em 0 .4em; }
+.chapter > p:first-of-type { color: var(--muted); }
 
-/* Code */
-pre, .highlight pre { padding: .8em 1em; border-radius: 6px; font-size: 9.5pt; overflow-x: auto; line-height: 1.4; }
-code { font-size: .92em; }
-:not(pre) > code { padding: .1em .35em; border-radius: 4px; background: #f0f0f3; }
+/* ---------------- Code ---------------- */
+.highlight { background: var(--code-bg); border-radius: 10px; margin: .9em 0; overflow: hidden; }
+.highlight pre { margin: 0; padding: .9em 1.1em; font-family: var(--font-mono); font-size: 9pt; line-height: 1.5; color: var(--code-fg); overflow-x: auto; }
+:not(pre) > code { font-family: var(--font-mono); font-size: .86em; padding: .12em .42em; border-radius: 5px; background: var(--accent-soft); color: var(--accent-ink); }
 
-/* Resources */
-.resources { margin-top: 1.4em; padding: .8em 1em; border-radius: 8px; background: #f6f8fa; border: 1px solid #e3e6ea; }
-.resources h3 { margin: .1em 0 .5em; font-size: 12pt; }
-.res-list { margin: 0; padding-left: 1.1em; }
-.res-list li { margin: .35em 0; }
-.res-kind { display: inline-block; font-size: 8pt; text-transform: uppercase; letter-spacing: .04em; padding: .05em .4em; border-radius: 4px; background: #dde3ea; color: #333; }
-.res-src { color: #888; font-size: 9pt; }
+/* ---------------- Callout cards ---------------- */
+.callout { border-radius: 12px; padding: .8em 1.1em .5em; margin: 1.05em 0; border: 1px solid var(--rule); border-left: 5px solid var(--accent); background: var(--surface); }
+.callout-label { font-family: var(--font-head); font-weight: 700; font-size: 9pt; letter-spacing: .09em; text-transform: uppercase; color: var(--accent); margin: 0 0 .45em; }
+.callout-exercises { border-left-color: var(--c-ex); background: var(--c-ex-bg); }
+.callout-exercises .callout-label { color: var(--c-ex); }
+.callout-quiz { border-left-color: var(--c-quiz); background: var(--c-quiz-bg); }
+.callout-quiz .callout-label { color: var(--c-quiz); }
+.callout > *:last-child { margin-bottom: .35em; }
+
+/* ---------------- Resources ---------------- */
+.resources { margin-top: 1.7em; padding: .9em 1.1em; border-radius: 12px; background: var(--surface); border: 1px solid var(--rule); }
+.resources h3 { margin: 0 0 .55em; font-family: var(--font-head); font-size: 11pt; color: var(--accent); letter-spacing: .02em; }
+.res-list { list-style: none; margin: 0; padding: 0; }
+.res-list li { margin: .42em 0; padding-left: 1.2em; position: relative; }
+.res-list li::before { content: "\2192"; position: absolute; left: 0; color: var(--accent); }
+.res-kind { display: inline-block; font-family: var(--font-head); font-size: 7.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding: .1em .45em; border-radius: 5px; background: var(--accent-soft); color: var(--accent-ink); margin-right: .15em; }
+.res-src { color: var(--muted); font-size: 8.5pt; }
 .res-unverified { color: #9a6700; font-size: 8pt; }
 
-blockquote { border-left: 3px solid #ccc; margin: 1em 0; padding: .2em 1em; color: #444; }
-table { border-collapse: collapse; width: 100%; }
-th, td { border: 1px solid #ddd; padding: .4em .6em; text-align: left; }
+/* ---------------- Misc ---------------- */
+blockquote { border-left: 3px solid var(--accent); margin: 1em 0; padding: .2em 1em; color: var(--muted); }
+table { border-collapse: collapse; width: 100%; font-size: 10pt; }
+th, td { border: 1px solid var(--rule); padding: .45em .6em; text-align: left; }
+th { background: var(--surface); font-family: var(--font-head); }

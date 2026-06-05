@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 from pathlib import Path
@@ -22,12 +23,14 @@ from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.table import Table
 
+from .agent_build import build_pdf, scaffold_run, search_resources
 from .config import load_config, save_config
 from .generate.outline import build_outline, format_toc
 from .generate.pipeline import Reporter, RunStore, new_run_id, run_pipeline, slugify
 from .llm import Usage, get_provider
 from .models import BookSpec, Depth, Outline, Profile, RunState, Style
 from .profile import load_profile, save_profile
+from .resources import default_providers, default_validator
 
 app = typer.Typer(
     help="SkillBook - generate personalized, book-length learning PDFs with AI.",
@@ -302,3 +305,86 @@ def config(
         console.print("[green]Configuration saved.[/]")
     if show or not changed:
         console.print_json(cfg.model_dump_json())
+
+
+# --------------------------------------------------------------------------- #
+# Claude Code mode — the agent authors the book; these helpers do the no-LLM work
+# (used by the /skillbook slash command). None of them need an API key.
+# --------------------------------------------------------------------------- #
+
+
+@app.command()
+def scaffold(
+    topic: str = typer.Option(..., "--topic", "-t", help="What the book teaches."),
+    style: Style = typer.Option(Style.casual, "--style", "-s", help="Register."),
+) -> None:
+    """[Claude Code mode] Create a run directory for the agent to fill in."""
+    config = load_config()
+    profile = load_profile()
+    run_dir = scaffold_run(
+        topic, style=style, runs_dir=config.runs_dir, learner_name=profile.name if profile else ""
+    )
+    console.print(f"[green]Run created:[/] {run_dir}")
+    console.print(
+        "Next: fill [cyan]book.json[/] (title, subtitle, chapters:[{id,title}]), write each "
+        f"[cyan]chapters/<id>.md[/], add [cyan]chapters/<id>.resources.json[/] from "
+        f"`skillbook search`, then run [cyan]skillbook build {run_dir}[/]."
+    )
+
+
+@app.command()
+def search(
+    queries: list[str] = typer.Argument(..., help="One or more search queries."),
+    limit: int = typer.Option(5, "--limit", "-n", help="Results per query, per source."),
+) -> None:
+    """[Claude Code mode] Provenance-first search: print REAL, reachability-checked links as JSON."""
+    config = load_config()
+    results = search_resources(
+        queries,
+        providers=default_providers(config),
+        validator=default_validator(config),
+        limit=limit,
+    )
+    typer.echo(json.dumps(results, indent=2, ensure_ascii=False))
+
+
+@app.command()
+def build(
+    run: str = typer.Argument(..., help="Run directory path or run id."),
+    out: Optional[Path] = typer.Option(None, "--out", "-o", help="Output PDF path."),
+) -> None:
+    """[Claude Code mode] Render a PDF from the agent's on-disk artifacts (no API key)."""
+    config = load_config()
+    run_dir = Path(run)
+    if not run_dir.exists():
+        run_dir = Path(config.runs_dir) / run
+    if not (run_dir / "book.json").exists():
+        console.print(f"[red]No book.json found in {run_dir}.[/]")
+        raise typer.Exit(code=1)
+    meta = json.loads((run_dir / "book.json").read_text(encoding="utf-8-sig"))
+    out_path = out or Path(
+        meta.get("out") or Path(config.books_dir) / f"{slugify(meta.get('topic') or 'book')}.pdf"
+    )
+    result = build_pdf(run_dir, Path(out_path))
+    console.print(f"[green]PDF written:[/] {result}")
+
+
+@app.command()
+def verify(
+    pdf: Path = typer.Argument(..., help="A finished book PDF to quality-check."),
+    raster: Optional[Path] = typer.Option(None, "--raster", help="Also write page PNGs to this dir."),
+) -> None:
+    """Read a finished book and flag layout problems (blank/near-empty pages)."""
+    from .render.verify import analyze_pdf, rasterize_pages
+
+    report = analyze_pdf(pdf)
+    verdict = "[green]no layout issues[/]" if report.ok else "[yellow]issues found[/]"
+    console.print(f"{report.page_count} pages · {verdict}")
+    for issue in report.issues:
+        console.print(f"  [yellow]! {issue}[/]")
+    for note in report.notes:
+        console.print(f"  [dim]- {note}[/]")
+    if raster is not None:
+        paths = rasterize_pages(pdf, raster)
+        console.print(f"[dim]wrote {len(paths)} page images to {raster}[/]")
+    raise typer.Exit(code=0 if report.ok else 1)

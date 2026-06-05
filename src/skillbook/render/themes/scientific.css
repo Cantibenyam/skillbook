@@ -1,17 +1,31 @@
-/* Scientific register: serif body, justified text, numbered sections. */
+/* Scientific register — elegant serif body, deep-teal accent, numbered sections. */
 
-body { font-family: Georgia, "Times New Roman", Cambria, serif; color: #111; text-align: justify; hyphens: auto; }
+:root {
+  --font-body: 'Source Serif 4', Georgia, serif;
+  --font-head: 'Source Serif 4', Georgia, serif;
+  --font-display: 'Source Serif 4', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-.book-title, .chapter-title { font-family: Georgia, serif; color: #111; }
-.chapter-title { border-bottom-color: #111; }
-.book-subtitle { font-style: italic; }
+  --ink: #14213d;
+  --muted: #57606f;
+  --accent: #0f766e;       /* teal-700 */
+  --accent-2: #155e75;     /* cyan-800 (cover gradient) */
+  --accent-soft: #cdfbf1;  /* teal-100 */
+  --accent-ink: #115e59;   /* teal-800 */
+  --rule: #d9e6e3;
+  --surface: #f2faf8;
 
-/* Automatic section / subsection numbering within a chapter. */
+  --code-bg: #282c34;      /* one-dark */
+  --code-fg: #c2c8d4;
+
+  --c-ex: #1d4ed8;         /* exercises = blue */
+  --c-ex-bg: #eff6ff;
+  --c-quiz: #9333ea;       /* quiz = purple */
+  --c-quiz-bg: #faf5ff;
+}
+
+body { text-align: justify; hyphens: auto; }
+
+/* Automatic section numbering within a chapter. */
 .chapter { counter-reset: sec; }
-.chapter h2 { counter-reset: subsec; font-size: 15pt; margin-top: 1.6em; }
-.chapter h3 { font-size: 12.5pt; margin-top: 1.1em; }
-.chapter h2::before { counter-increment: sec; content: counter(sec) ". "; }
-.chapter h3::before { counter-increment: subsec; content: counter(sec) "." counter(subsec) "  "; }
-
-pre, .highlight pre { background: #f4f4f4; border: 1px solid #e0e0e0; }
-a { color: #11457a; }
+.chapter h2::before { counter-increment: sec; content: counter(sec) ".\00a0\00a0"; color: var(--accent); font-weight: 600; }

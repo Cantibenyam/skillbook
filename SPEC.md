@@ -1,7 +1,7 @@
 # SkillBook — Specification
 
 > **Status:** v0.1 (MVP scope), 2026-06-04
-> **Owner:** @imangaliduisebayev
+> **Owner:** @Cantibenyam
 > A Python CLI that turns a learning request (a topic or roadmap) into a personalized,
 > book-length **PDF** — written to fit *you*, in a casual or scientific register, with
 > exercises, worked examples, quizzes, a visual roadmap, and **verified** further-reading links.
@@ -68,6 +68,16 @@ skillbook config               # set provider/model/keys, user-agent, etc.
 → draft chapters (live progress) → gather+verify resources → roadmap → assemble → render PDF →
 print path + token/cost summary.
 
+### Two modes
+
+- **Mode A — API (above):** the CLI drives the LLM via LiteLLM. Needs a provider API key.
+- **Mode B — Claude Code (no API key):** open the repo in Claude Code and run `/skillbook <topic>`
+  (`.claude/commands/skillbook.md`). **Claude Code itself authors the book**; the package supplies
+  the deterministic, no-LLM helpers it calls — `scaffold` (create a run dir), `search`
+  (provenance-first: real, reachability-checked candidate links the agent ranks — it never invents
+  URLs), and `build` (assemble the agent's `book.json` + `chapters/<id>.md` [+ `.resources.json`]
+  into the themed PDF). Both modes share the same renderer, themes, roadmap, and resource validation.
+
 ---
 
 ## 4. Personalization model
@@ -111,6 +121,7 @@ Sequential, checkpointed. Each stage writes its artifact to the **run directory*
 4. ROADMAP                  (local)    Outline -> one Mermaid flowchart (deterministic)
 5. ASSEMBLE                 (local)    cover + TOC + roadmap + chapters + resources -> book.html
 6. RENDER                   (local)    Playwright Chromium -> book.pdf
+7. VERIFY                   (local)    rasterize pages (pypdfium2) -> flag blank/near-empty pages
 ```
 
 **Outline (stage 1)** — one structured (JSON-schema) call returns:
@@ -198,6 +209,19 @@ for code) → themed HTML → `page.pdf(print_background=True, prefer_css_page_s
 
 A one-method `PdfRenderer` protocol wraps this so a WeasyPrint "print/academic" backend *could* be
 added later — but it is **not** built now.
+
+**Design.** Vendored open-source fonts (Inter / Sora, Source Serif 4, JetBrains Mono) are inlined
+as data URIs (offline-safe); each register has its own accent palette. Chapters open with a large
+outlined number; Exercises / Quiz / Worked-example sections become colored **callout cards** (the
+assembler wraps those `<h3>` sections post-render); code is a dark card. The roadmap is constrained
+to one page via CSS `max-height` + `break-inside: avoid`, and Mermaid renders only after
+`document.fonts.ready` so node labels are sized for the real font (no clipping).
+
+**Verify (stage 7).** `render/verify.py` rasterizes the finished PDF (pypdfium2 — permissive
+license, no external binary) and flags blank / near-empty **body** pages by ink coverage. It runs
+automatically at the end of `skillbook new`, is exposed as `skillbook verify <pdf>`, and is a step
+in the `/skillbook` (Claude Code) workflow. Low-density pages (normal chapter ends) are reported as
+informational notes, not failures.
 
 ---
 
@@ -313,6 +337,7 @@ $env:ANTHROPIC_API_KEY = "sk-ant-..."
 6. A killed run resumes via `skillbook resume <id>` and skips completed chapters.
 7. The run prints a token + USD usage summary.
 8. Clean install on Windows 11 with **no** MSYS2/GTK/Node/Docker.
+9. The roadmap renders on a **single page** (never split) even for a comprehensive (12–18 chapter) book, and `skillbook verify` reports **no blank/near-empty body pages**.
 
 ---
 

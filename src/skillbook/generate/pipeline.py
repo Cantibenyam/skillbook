@@ -203,4 +203,17 @@ def run_pipeline(
         store.save_state(state)
         reporter.info(f"PDF written to {out_path}")
 
+        # Post-render quality check (best-effort; never fails the run).
+        try:
+            from ..render import analyze_pdf
+
+            report = analyze_pdf(out_path)
+            if report.ok:
+                reporter.info(f"Quality check: {report.page_count} pages, no layout issues.")
+            else:
+                for issue in report.issues:
+                    reporter.warn(f"Quality: {issue}")
+        except Exception as exc:
+            reporter.warn(f"Quality check skipped: {exc}")
+
     return state

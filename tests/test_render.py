@@ -49,8 +49,25 @@ def test_build_html_structure_and_theme_swap():
     assert "highlight" in html  # pygments highlighted the code block
 
     casual = build_html(_tiny_book(Style.casual)[0], outline, drafts)
-    assert "Segoe UI" in casual  # casual theme
-    assert "Segoe UI" not in html  # scientific theme does not include it
+    assert "#7c3aed" in casual  # casual violet accent
+    assert "#7c3aed" not in html  # scientific uses a different accent
+    assert "#0f766e" in html  # scientific teal accent
+    assert "@font-face" in html  # vendored fonts inlined
+
+
+def test_wrap_callouts_groups_exercise_and_quiz_sections():
+    from skillbook.render.assemble import _wrap_callouts, md_to_html
+
+    html = md_to_html(
+        "Intro\n\n## Section\n\nText.\n\n### Worked example\n\n```py\nx=1\n```\n\n"
+        "### Exercises\n\n1. Do X.\n\n### Quiz\n\n1. Q?\n\n**Answers:** A.\n"
+    )
+    wrapped = _wrap_callouts(html)
+    assert "callout callout-example" in wrapped
+    assert "callout callout-exercises" in wrapped
+    assert "callout callout-quiz" in wrapped
+    assert '<p class="callout-label">Exercises</p>' in wrapped
+    assert ">Section<" in wrapped  # a normal section heading is left untouched
 
 
 def test_render_resolves_mermaid_and_writes_valid_pdf(tmp_path):
@@ -77,6 +94,14 @@ def test_render_resolves_mermaid_and_writes_valid_pdf(tmp_path):
     data = out.read_bytes()
     assert data[:5] == b"%PDF-"
     assert len(data) > 5000
+
+    # The verifier reads it back: real pages, no blank pages.
+    from skillbook.render.verify import analyze_pdf
+
+    report = analyze_pdf(out)
+    assert report.page_count >= 4  # cover + toc + roadmap + chapters
+    assert report.blank_pages == []
+    assert report.ok
 
 
 def test_pipeline_end_to_end_offline_produces_pdf(tmp_path):

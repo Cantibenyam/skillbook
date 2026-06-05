@@ -20,7 +20,7 @@ APP_DIR = Path.home() / ".skillbook"
 CONFIG_PATH = APP_DIR / "config.json"
 PROFILE_PATH = APP_DIR / "profile.json"
 
-DEFAULT_USER_AGENT = "SkillBook/0.1 (+https://github.com/imangaliduisebayev/skillbook)"
+DEFAULT_USER_AGENT = "SkillBook/0.1 (+https://github.com/Cantibenyam/skillbook)"
 
 
 class Config(BaseModel):
