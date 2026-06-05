@@ -15,7 +15,7 @@ You can run it two ways:
 
 - **API mode** — a standalone CLI that calls an LLM provider (needs an API key).
 - **Claude Code mode** — open the repo in [Claude Code](https://claude.com/claude-code) and run
-  `/skillbook <topic>`; Claude Code writes the book itself (**no API key**).
+  `/skillbook <topic>`; Claude Code writes the book itself.
 
 ---
 
