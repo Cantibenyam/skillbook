@@ -1,0 +1,52 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "skillbook"
+version = "0.1.0"
+description = "Generate personalized, book-length learning PDFs with AI."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "imangaliduisebayev" }]
+keywords = ["ai", "llm", "pdf", "learning", "education", "book-generator", "roadmap"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Environment :: Console",
+    "Topic :: Education",
+]
+dependencies = [
+    "typer>=0.12",
+    "click>=8",
+    "rich>=13",
+    "litellm>=1.87,<2",
+    "pydantic>=2",
+    "markdown-it-py>=3",
+    "mdit-py-plugins>=0.4",
+    "pygments>=2.17",
+    "playwright>=1.42",
+    "ddgs>=9.14.4",
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "mypy>=1.10"]
+
+[project.scripts]
+skillbook = "skillbook.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/imangaliduisebayev/skillbook"
+Repository = "https://github.com/imangaliduisebayev/skillbook"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/skillbook"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/skillbook", "SPEC.md", "README.md"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
